@@ -27,6 +27,11 @@ def parse_args(base_parser, args, namespace):
         choices=distributed.registered_backends(),
     )
     parser.add_argument("--log_interval", default=50, type=int)
+    parser.add_argument(
+        "--log_timestamps",
+        action="store_true",
+        help="Prefix stdout training/eval log lines with an ISO timestamp.",
+    )
 
     # Checkpointing
     parser.add_argument("--results_base_folder", default="./exps", type=str)

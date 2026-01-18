@@ -2,6 +2,7 @@ import copy
 import math
 import time
 from contextlib import nullcontext
+from datetime import datetime
 from pathlib import Path
 
 import torch
@@ -16,6 +17,10 @@ from .utils import (eval, get_batch, get_parameter_norms, load_checkpoint,
                     load_worker_state, log_prodigy_lr, save_checkpoint,
                     save_worker_state, visualize_routing)
 
+def _ts() -> str:
+    # ISO-ish timestamp for log lines (local time).
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 def train(
     model,
@@ -26,9 +31,15 @@ def train(
     distributed_backend,
     cfg,
 ):
+    def log_line(msg: str):
+        if getattr(cfg, "log_timestamps", False):
+            print(f"[{_ts()}] {msg}", flush=True)
+        else:
+            print(msg, flush=True)
+
     not_compiled_model = model
     if cfg.compile:
-        print(f"Compiling model ...")
+        log_line("Compiling model ...")
         model = torch.compile(model)
 
     if "cuda" in cfg.device:
@@ -47,7 +58,7 @@ def train(
         # This is a full resume including the model weights, optimizer, state
         # dataloader state, random seed, etc. Not indended for fine tuning or
         # other scenarios where some of these should change.
-        print(f"\nResuming Training From {cfg.resume_from}")
+        log_line(f"Resuming Training From {cfg.resume_from}")
         ckpt_dir = Path(cfg.resume_from)
         curr_iter = load_checkpoint(
             model,
@@ -256,13 +267,13 @@ def train(
             if cfg.opt == "prodigy":
                 prodigy_efective_lrs = log_prodigy_lr(opt)
 
-            print(
+            log_line(
                 f"Train: Iter={curr_iter} ({epoch:0.3f} epochs) "
                 f"train_loss={train_loss:.3f} iter_dt={dt:.2e}s "
                 f"lr={current_lrs[0]:.2e}"
             )
             if cfg.opt == "prodigy":
-                print(f"effective_lr={prodigy_efective_lrs[0]:.2e}")
+                log_line(f"effective_lr={prodigy_efective_lrs[0]:.2e}")
 
             if cfg.wandb:
                 wandb_logs = {
@@ -309,6 +320,11 @@ def eval_and_log(
     if not distributed_backend.is_master_process():
         # Only evaluate and log on master rank
         return
+    def log_line(msg: str):
+        if getattr(cfg, "log_timestamps", False):
+            print(f"[{_ts()}] {msg}", flush=True)
+        else:
+            print(msg, flush=True)
 
     model.eval()
     if cfg.opt == "sf-sgd" or cfg.opt == "sf-adamw":
@@ -333,7 +349,7 @@ def eval_and_log(
         cfg=cfg,
     )
 
-    print(
+    log_line(
         f">Eval: Iter={curr_iter} ({epoch:0.3f} epochs) "
         f"val_loss={val_loss:.3f} "
         f"val_pp={val_perplexity:.3f} "
