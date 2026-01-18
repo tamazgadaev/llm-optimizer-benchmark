@@ -408,7 +408,9 @@ def main(args, parser):
         scheduler = None
 
     if (exp_dir / "ckpts" / "latest" / "main.pt").exists():
-        if not args.auto_resume:
+        # Handle both boolean and string "False" from CLI
+        auto_resume = args.auto_resume not in (False, "False", "false", "0", 0)
+        if not auto_resume:
             raise ValueError(
                 f"The experiment dir {exp_dir} already exists. "
                 + "To resume training, set auto_resume=True. "
