@@ -8,7 +8,6 @@
 #   keep `batch_size * acc_steps` constant.
 #
 # Global tokens / optimizer-step = (batch_size * acc_steps) * sequence_length
-
 torchrun --nproc_per_node=8 ./src/main.py --config_format base --model llama --distributed_backend nccl \
     --n_embd 768 --n_head 12 --n_layer 12 \
     --batch_size 128 --sequence_length 512 --acc_steps 2 \
@@ -19,3 +18,4 @@ torchrun --nproc_per_node=8 ./src/main.py --config_format base --model llama --d
     --wandb --wandb_project mars_understanding  --wandb_entity tamaz \
     --eval_interval 200 --latest_ckpt_interval 1000 \
     --log_timestamps --auto_resume False \
+    --dataset_num_proc 10 \

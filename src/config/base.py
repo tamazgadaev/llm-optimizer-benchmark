@@ -249,6 +249,12 @@ def parse_args(base_parser, args, namespace):
     )
     parser.add_argument("--vocab_size", default=50304, type=int)
     parser.add_argument(
+        "--dataset_num_proc",
+        default=40,
+        type=int,
+        help="Number of processes to use for HuggingFace Datasets preprocessing/tokenization (datasets.map num_proc).",
+    )
+    parser.add_argument(
         "--data_in_ram", action="store_true"
     )  # force the data to RAM, mostly useless except for openwebtext2
 

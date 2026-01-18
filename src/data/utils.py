@@ -13,7 +13,7 @@ from .fineweb_edu import get_fineweb_edu_data
 from .openwebtext2 import get_openwebtext2_data
 from .redpajama import get_redpajama_data, get_redpajamav2_data
 from .shakespeare import get_shakespeare_data
-from .slimpajama import get_slimpajama_data
+from .slimpajama import get_slimpajama_chunk1, get_slimpajama_data
 from .wikitext import get_wikitext_data
 
 
@@ -22,6 +22,9 @@ def get_dataset(args) -> Dict[str, np.ndarray]:
     contained in its own python file. The expected format at the moment is a dictionary of np.memmap
     containing two keys: 'train' and 'val', corresponding to the tokenized training and validation data.
     """
+    # HuggingFace Datasets preprocessing/tokenization parallelism (used by several datasets.*.py)
+    num_proc = getattr(args, "dataset_num_proc", 40)
+
     if args.dataset == "wikitext":
         return get_wikitext_data(args.datasets_dir)
     if args.dataset == "shakespeare-char":
@@ -37,21 +40,23 @@ def get_dataset(args) -> Dict[str, np.ndarray]:
         val_data = np.concatenate((arxiv_data["val"], wiki_data["val"]))
         return {"train": train_data, "val": val_data}
     if args.dataset == "openwebtext2":
-        return get_openwebtext2_data(args.datasets_dir)
+        return get_openwebtext2_data(args.datasets_dir, num_proc=num_proc)
     if args.dataset == "redpajama":
-        return get_redpajama_data(args.datasets_dir)
+        return get_redpajama_data(args.datasets_dir, num_proc=num_proc)
     if args.dataset == "redpajamav2":
-        return get_redpajamav2_data(args.datasets_dir)
+        return get_redpajamav2_data(args.datasets_dir, num_proc=num_proc)
     if args.dataset == "slimpajama":
-        return get_slimpajama_data(args.datasets_dir)
+        return get_slimpajama_data(args.datasets_dir, num_proc=num_proc)
+    if args.dataset == "slimpajama_chunk1":
+        return get_slimpajama_chunk1(args.datasets_dir, num_proc=num_proc)
     if args.dataset == "fineweb":
-        return get_fineweb_data(args.datasets_dir)
+        return get_fineweb_data(args.datasets_dir, num_proc=num_proc)
     if args.dataset == "finewebedu":
-        return get_fineweb_edu_data(args.datasets_dir)
+        return get_fineweb_edu_data(args.datasets_dir, num_proc=num_proc)
     if args.dataset == "c4":
-        return get_c4_data(args.datasets_dir)
+        return get_c4_data(args.datasets_dir, num_proc=num_proc)
     if args.dataset in SUPPORTED_TASK_MAP:
-        return get_benchmark_task(args.dataset)
+        return get_benchmark_task(args.dataset, num_proc=num_proc)
     else:
         raise NotImplementedError(f"Unknow dataset key '{args.dataset}'")
 
